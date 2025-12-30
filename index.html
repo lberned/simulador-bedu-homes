@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Calculadora Bedu Homes</title>
+    
+    <meta property="og:title" content="Simulador de Inversión Bedu Homes">
+    <meta property="og:description" content="Descubre tu rentabilidad real. Compara el modelo tradicional vs. el método Bedu en segundos.">
+    <meta name="theme-color" content="#FFFFFF">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    screens: {
+                        'xs': '375px',
+                    },
+                    colors: {
+                        bedu: {
+                            DEFAULT: '#F9B233', 
+                            50: '#FFF8E6',
+                            100: '#FDEBC2',
+                            500: '#F9B233',
+                            600: '#D99018',
+                            700: '#B5720A',
+                            900: '#7A4900',
+                            950: '#451a03'
+                        },
+                        trad: { 
+                            50: '#F8FAFC',
+                            100: '#F1F5F9',
+                            500: '#64748B',
+                            600: '#475569',
+                            700: '#334155',
+                            900: '#0F172A'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(249, 178, 51, 0.3)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* RESET & BASE */
+        html, body {
+            overflow-x: hidden;
+            background-color: #f8fafc;
+            font-family: 'Montserrat', sans-serif;
+            color: #334155;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* CARD ROBUSTA */
+        .card { 
+            background-color: #ffffff;
+            border-radius: 20px; 
+            border: 1px solid #e2e8f0; 
+            padding: 20px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+            position: relative; 
+            isolation: isolate; 
+        }
+
+        /* INPUTS MEJORADOS */
+        .input-group label { 
+            display: block; 
+            font-size: 0.7rem; 
+            font-weight: 700; 
+            color: #64748b; 
+            margin-bottom: 0.4rem; 
+            text-transform: uppercase; 
+            letter-spacing: 0.05em; 
+        }
+        .input-field { 
+            width: 100%; 
+            padding: 12px 12px 12px 40px; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 12px; 
+            font-size: 16px; 
+            color: #1e293b; 
+            background-color: #fff; 
+            font-weight: 600; 
+            -webkit-appearance: none; 
+            transition: all 0.2s;
+        }
+        .input-field:focus { 
+            border-color: #F9B233; 
+            outline: none; 
+            box-shadow: 0 0 0 3px rgba(249, 178, 51, 0.15); 
+        }
+        .input-field-bold { font-weight: 800; color: #0f172a; background-color: #f8fafc; }
+        
+        .section-title { 
+            color: #1e293b; 
+            font-weight: 800; 
+            font-size: 1.15rem; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            margin-bottom: 1.25rem; 
+            letter-spacing: -0.02em; 
+        }
+        
+        /* BARRAS PROGRESO */
+        .bar-container { 
+            background-color: #f1f5f9; 
+            border-radius: 9999px; 
+            overflow: hidden; 
+            height: 1.5rem; 
+            position: relative; 
+            margin-top: 8px; 
+        }
+        @media (min-width: 768px) { .bar-container { height: 2rem; } }
+        
+        .bar-fill { 
+            height: 100%; 
+            transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1); 
+            border-radius: 9999px; 
+        }
+        
+        /* PANELES ANIMADOS */
+        #assumptions-panel { display: none; }
+        #assumptions-panel.show { display: block; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ETIQUETAS ESTADO */
+        .status-badge { 
+            font-size: 10px; 
+            font-weight: 800; 
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.05em; 
+            display: inline-block; 
+            white-space: nowrap;
+        }
+        .status-success { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .status-error { background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+        .status-warn { background-color: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+
+        /* CARRUSEL - SCROLL EN TODAS VERSIONES */
+        .carousel-container { 
+            display: flex; 
+            overflow-x: auto; 
+            scroll-snap-type: x mandatory; 
+            gap: 16px; 
+            padding: 4px 4px 20px 4px;
+            -webkit-overflow-scrolling: touch; 
+            scrollbar-width: none; 
+            width: 100%;
+        }
+        .carousel-container::-webkit-scrollbar { display: none; }
+        
+        .carousel-item { 
+            scroll-snap-align: start; 
+            flex: 0 0 85%; /* Móvil */
+            max-width: 300px;
+            height: 220px; 
+            border-radius: 16px; 
+            overflow: hidden; 
+            position: relative; 
+            background-color: #e2e8f0; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        
+        @media (min-width: 1024px) {
+            .carousel-item {
+                flex: 0 0 280px; /* PC: Ancho fijo para carrusel */
+                height: 200px;
+            }
+        }
+
+        .carousel-item img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* TOGGLE SWITCH */
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 30px;
+            border-radius: 15px;
+            background-color: #e2e8f0;
+            transition: background-color 0.2s;
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 26px;
+            height: 26px;
+            background-color: white;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        input:checked + .toggle-switch {
+            background-color: #F9B233;
+        }
+        input:checked + .toggle-switch::after {
+            transform: translateX(22px);
+        }
+    </style>
+</head>
+<body class="pb-24 lg:pb-12 bg-slate-50 antialiased selection:bg-bedu-200 selection:text-bedu-900"> 
+    
+    <!-- FIX: max-w-6xl para PC más compacto -->
+    <div class="max-w-6xl mx-auto px-4 py-6 md:p-8 overflow-hidden">
+        
+        <!-- HEADER -->
+        <header class="mb-6 flex flex-col md:flex-row justify-between items-center gap-6 border-b border-slate-200 pb-6 w-full">
+            <div class="flex flex-col md:flex-row items-center gap-5 w-full md:w-auto text-center md:text-left">
+                <!-- LOGO -->
+                <div class="shrink-0 relative group cursor-pointer">
+                    <img src="logo.png" alt="Bedu Homes" class="h-12 md:h-16 w-auto object-contain mx-auto" onerror="this.style.display='none'; document.getElementById('fallback-logo').style.display='block'">
+                    <svg id="fallback-logo" style="display:none;" width="160" height="45" viewBox="0 0 180 50" fill="none" xmlns="http://www.w3.org/2000/svg" class="mx-auto drop-shadow-sm">
+                        <text x="0" y="38" font-family="'Montserrat', sans-serif" font-weight="900" font-size="40" fill="#1e293b" letter-spacing="-2">bedu</text>
+                        <text x="100" y="38" font-family="'Montserrat', sans-serif" font-weight="300" font-size="40" fill="#F9B233" letter-spacing="-1">homes</text>
+                        <circle cx="92" cy="14" r="5" fill="#F9B233"/>
+                    </svg>
+                </div>
+                <div class="hidden md:block w-px h-12 bg-slate-200"></div>
+                
+                <div class="w-full md:w-auto">
+                    <!-- TÍTULO ACTUALIZADO -->
+                    <h1 class="text-xl md:text-2xl font-black text-slate-800 leading-none tracking-tight break-words">Simulador de Acceso a Vivienda</h1>
+                    <p class="text-slate-400 text-xs font-bold mt-1.5 uppercase tracking-widest">Análisis Financiero Inteligente</p>
+                </div>
+            </div>
+            
+            <button onclick="toggleAssumptions()" class="w-full md:w-auto flex justify-center items-center gap-2 bg-white px-5 py-2.5 rounded-full border border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wide hover:border-bedu-500 hover:text-bedu-600 hover:shadow-md transition-all active:scale-95">
+                <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+                Hipótesis de Cálculo
+            </button>
+        </header>
+
+        <!-- INTRO CONTEXTUAL (NUEVO) -->
+        <div class="mb-8 md:mb-10 text-center md:text-left max-w-4xl mx-auto md:mx-0">
+            <p class="text-base md:text-lg text-slate-700 font-medium mb-1 leading-snug">
+                Si tienes ingresos pero no suficientes ahorros, <span class="font-bold text-bedu-600">el problema no eres tú.</span>
+            </p>
+            <p class="text-xs md:text-sm text-slate-500 leading-relaxed max-w-2xl">
+                En Bedu integramos compra y reforma en una sola hipoteca para que puedas acceder a tu vivienda con mucho menos cash inicial.
+            </p>
+        </div>
+
+        <!-- HIPOTESIS DESPLEGABLE -->
+        <div id="assumptions-panel" class="mb-8">
+            <div class="bg-[#1e293b] text-white p-6 rounded-2xl shadow-xl border border-slate-700 relative overflow-hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-[11px]">
+                    <!-- COLUMNA 1 -->
+                    <div>
+                        <h4 class="text-[#F9B233] font-extrabold uppercase text-[10px] tracking-[0.1em] mb-4 border-b border-slate-600 pb-2">1. Adquisición</h4>
+                        <ul class="space-y-2 font-mono text-slate-300">
+                            <li class="flex justify-between items-center"><span>Dto. Particular:</span> <span>3,0%</span></li>
+                            <li class="flex justify-between items-center text-white font-bold bg-white/10 p-1.5 -mx-1.5 rounded">
+                                <span>Dto. Bedu (Compra):</span> <span class="text-[#F9B233]">6,0%</span>
+                            </li>
+                            <li class="flex justify-between items-center"><span>ITP Bedu (Inversión):</span> <span>3,0%</span></li>
+                            <li class="flex justify-between items-center"><span>ITP Cliente (Final):</span> <span>6,0%</span></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- COLUMNA 2 -->
+                    <div>
+                        <h4 class="text-[#F9B233] font-extrabold uppercase text-[10px] tracking-[0.1em] mb-4 border-b border-slate-600 pb-2">2. Modelo Bedu</h4>
+                        <ul class="space-y-2 font-mono text-slate-300">
+                             <li class="flex justify-between items-center"><span>Coste Reforma:</span> <span class="text-white font-bold">1.100 €/m²</span></li>
+                             <li class="flex justify-between items-center"><span>Margen Venta:</span> <span class="text-[#F9B233] font-bold">+15% s/Inv.</span></li>
+                             <li class="flex justify-between items-center text-red-300"><span>Ineficiencia Tradic.:</span> <span>+15% Coste Ref.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- COLUMNA 3 -->
+                    <div>
+                        <h4 class="text-[#F9B233] font-extrabold uppercase text-[10px] tracking-[0.1em] mb-4 border-b border-slate-600 pb-2">3. Financiero</h4>
+                        <ul class="space-y-2 font-mono text-slate-300">
+                             <li class="flex justify-between items-center"><span>Interés Fijo:</span> <span class="text-white font-bold">3,0%</span></li>
+                             <li class="flex justify-between items-center"><span>Endeudamiento Max:</span> <span>40%</span></li>
+                             <li class="flex justify-between items-center">
+                                 <span>LTV (&lt;35 / &gt;35):</span> 
+                                 <span class="text-white font-bold">95% / 80%</span>
+                             </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LAYOUT HÍBRIDO -->
+        <div class="flex flex-col lg:grid lg:grid-cols-12 gap-8 lg:gap-6 items-start relative z-0">
+            
+            <!-- COLUMNA IZQUIERDA (INPUTS) -->
+            <div class="w-full lg:col-span-4 lg:sticky lg:top-8 mb-8 lg:mb-0 h-fit z-10"> 
+                
+                <!-- CARD PERFIL -->
+                <div class="card border-l-4 border-l-bedu-500 shadow-soft mb-6">
+                    <h3 class="section-title"><i data-lucide="wallet" class="text-bedu-500 w-6 h-6"></i> Tu Perfil</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="input-group relative">
+                                <label>Ingresos 1</label>
+                                <i data-lucide="euro" class="w-4 h-4 absolute left-3 top-[38px] text-slate-400 z-10"></i>
+                                <input type="tel" id="income1" value="2.500" class="input-field" oninput="formatInput(this); calcular()" inputmode="numeric">
+                            </div>
+                            <div class="input-group relative">
+                                <label>Ingresos 2</label>
+                                <i data-lucide="euro" class="w-4 h-4 absolute left-3 top-[38px] text-slate-400 z-10"></i>
+                                <input type="tel" id="income2" value="2.500" class="input-field" oninput="formatInput(this); calcular()" inputmode="numeric">
+                            </div>
+                        </div>
+                        
+                        <div class="input-group relative">
+                            <label>Ahorro Disponible (Cash)</label>
+                            <i data-lucide="piggy-bank" class="w-4 h-4 absolute left-3 top-[38px] text-bedu-500 z-10"></i>
+                            <input type="tel" id="savings" value="60.000" class="input-field input-field-bold border-bedu-200 focus:border-bedu-500 focus:ring-bedu-200" oninput="formatInput(this); calcular()" inputmode="numeric">
+                        </div>
+
+                        <!-- INTERRUPTOR -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors">
+                            <label class="flex items-center justify-between cursor-pointer w-full">
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-sm font-bold text-slate-700">¿Menor de 35 años?</span>
+                                    <span class="text-[10px] text-bedu-600 font-bold uppercase tracking-wide">Activa Financiación 95%</span>
+                                </div>
+                                <div class="relative">
+                                    <input type="checkbox" id="ageUnder35" class="sr-only" onchange="calcular()">
+                                    <div class="toggle-switch"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-center">
+                            <div class="bg-slate-50 rounded-lg p-2">
+                                <div class="text-[9px] font-bold text-slate-400 uppercase mb-1">Máx. Cuota (40%)</div>
+                                <div class="text-sm font-black text-slate-700" id="lbl_max_quota">0 €</div>
+                            </div>
+                            <div class="bg-bedu-50 rounded-lg p-2 border border-bedu-100">
+                                <div class="text-[9px] font-bold text-bedu-400 uppercase mb-1">Cap. Hipoteca</div>
+                                <div class="text-sm font-black text-bedu-600" id="lbl_max_mortgage">0 €</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD INMUEBLE -->
+                <div class="card border-l-4 border-l-trad-500 shadow-soft relative z-10">
+                    <h3 class="section-title"><i data-lucide="map-pin" class="text-trad-500 w-6 h-6"></i> El Inmueble</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 xs:grid-cols-2 gap-4">
+                             <div class="input-group">
+                                <label>Distrito</label>
+                                <div class="relative">
+                                    <select id="district" class="w-full py-3 pl-3 pr-8 border border-slate-200 rounded-xl bg-white text-xs font-bold text-slate-600 appearance-none outline-none focus:border-trad-500 focus:ring-2 focus:ring-trad-100 transition-all" onchange="updateNeighborhoods()">
+                                    </select>
+                                    <i data-lucide="chevron-down" class="w-4 h-4 absolute right-3 top-3.5 text-slate-400 pointer-events-none"></i>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Barrio</label>
+                                <div class="relative">
+                                    <select id="neighborhood" class="w-full py-3 pl-3 pr-8 border border-slate-200 rounded-xl bg-white text-xs font-bold text-slate-600 appearance-none outline-none focus:border-trad-500 focus:ring-2 focus:ring-trad-100 transition-all">
+                                    </select>
+                                    <i data-lucide="chevron-down" class="w-4 h-4 absolute right-3 top-3.5 text-slate-400 pointer-events-none"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="input-group relative">
+                                <label>Precio Anuncio</label>
+                                <input type="tel" id="price" value="325.000" class="input-field" oninput="formatInput(this); calcular()" inputmode="numeric">
+                                <span class="absolute right-3 top-[38px] text-xs text-slate-400 font-bold">€</span>
+                            </div>
+                            <div class="input-group relative">
+                                <label>Superficie</label>
+                                <input type="number" id="m2" value="80" class="input-field text-center" oninput="calcular()">
+                                <span class="absolute right-3 top-[38px] text-xs text-slate-400 font-bold">m²</span>
+                            </div>
+                        </div>
+
+                        <div id="rental_box" class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                                <i data-lucide="bar-chart-3" class="w-4 h-4 text-slate-400"></i> Alquiler Est.
+                            </span>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-xl font-black text-slate-700" id="lbl_rental_price">-- €</span>
+                                <span class="text-[10px] text-slate-400 font-medium">/mes</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA (RESULTADOS) -->
+            <div id="results_panel" class="w-full lg:col-span-8 space-y-6 relative z-0">
+                
+                <!-- CARD TICKET DE ENTRADA -->
+                <div class="card border-bedu-100 shadow-lg relative overflow-hidden ring-1 ring-bedu-500/10">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-bedu-50 to-transparent rounded-bl-full -mr-16 -mt-16 z-0 pointer-events-none opacity-50"></div>
+                    
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 z-10 relative gap-2">
+                        <div>
+                            <h2 class="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">Ticket de Entrada</h2>
+                            <p class="text-slate-400 text-xs md:text-sm font-bold mt-1">Cash necesario para firmar HOY</p>
+                        </div>
+                        <div class="bg-bedu-50 text-bedu-700 text-[10px] font-bold px-3 py-1.5 rounded-lg uppercase tracking-widest border border-bedu-200 shadow-sm self-start md:self-auto">
+                            Tu Ventaja
+                        </div>
+                    </div>
+
+                    <div class="space-y-8 relative z-10">
+                        <!-- BARRA TRADICIONAL -->
+                        <div class="relative group">
+                            <div class="flex flex-wrap justify-between items-end mb-2 gap-1">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-7 h-7 rounded-lg bg-trad-100 flex items-center justify-center text-trad-600 shadow-sm">
+                                        <i data-lucide="briefcase" class="w-3.5 h-3.5"></i>
+                                    </div>
+                                    <div class="flex flex-col leading-none">
+                                        <span class="text-xs font-black text-trad-700 uppercase tracking-wide">Tradicional</span>
+                                        <span class="text-[9px] text-slate-400 font-medium mt-0.5">Entrada + Gastos + <strong class="text-trad-500">Reforma</strong></span>
+                                    </div>
+                                </div>
+                                <span class="text-2xl font-bold text-trad-600 tracking-tight" id="val_capital_trad">0 €</span>
+                            </div>
+                            <div class="bar-container bg-slate-100 shadow-inner">
+                                <div class="bar-fill bg-trad-400 w-full relative overflow-hidden">
+                                    <div class="absolute inset-0 bg-white/20 skew-x-12 -ml-4 w-4"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BARRA BEDU -->
+                        <div class="relative group">
+                            <div class="flex flex-wrap justify-between items-end mb-2 gap-1">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-9 h-9 rounded-xl bg-bedu-500 flex items-center justify-center text-white shadow-lg shadow-bedu-500/30 ring-2 ring-white">
+                                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="flex flex-col leading-none">
+                                        <span class="text-sm font-black text-bedu-900 uppercase tracking-wide">Método Bedu</span>
+                                        <span class="text-[10px] text-bedu-700 font-bold mt-0.5">Reforma INCLUIDA en Hipoteca</span>
+                                    </div>
+                                </div>
+                                <span class="text-3xl md:text-4xl font-black text-bedu-500 tracking-tight drop-shadow-sm" id="val_capital_bedu">0 €</span>
+                            </div>
+                            <div class="bar-container bg-bedu-50 border border-bedu-100 h-8 md:h-10 shadow-inner rounded-full">
+                                <div id="bar_bedu" class="bar-fill bg-gradient-to-r from-bedu-400 to-bedu-500 shadow-glow flex items-center justify-end pr-3 transition-all duration-1000 relative overflow-hidden" style="width: 50%">
+                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-full h-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                                    <span class="text-[9px] md:text-[10px] text-slate-900 font-black tracking-widest uppercase drop-shadow-sm whitespace-nowrap">Menos Desembolso</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CAJA AHORRO -->
+                    <div class="mt-8 bg-slate-50 rounded-2xl border border-slate-200 p-5 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden">
+                         <div class="absolute left-0 top-0 bottom-0 w-1 bg-bedu-400"></div>
+                         <div class="flex items-center gap-4 z-10">
+                            <div class="bg-white p-3 rounded-full text-bedu-600 border border-bedu-100 shadow-sm shrink-0">
+                                <i data-lucide="piggy-bank" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Liquidez Preservada</p>
+                                <p class="text-sm text-slate-700 font-medium leading-tight">
+                                    Con Bedu, necesitas <span class="font-black text-xl text-bedu-600 block md:inline" id="saved_money">0 €</span> menos de tus ahorros.
+                                </p>
+                            </div>
+                        </div>
+                        <div id="status_msg" class="w-full md:w-auto text-center py-2.5 px-4 rounded-xl font-bold text-[10px] uppercase tracking-wider z-10 transition-all shadow-sm"></div>
+                    </div>
+                </div>
+
+                <!-- COMPARATIVA CUOTAS -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    
+                    <!-- BOX TRADICIONAL -->
+                    <div class="card flex flex-col justify-between gap-3 relative group hover:border-trad-300 transition-colors">
+                        <div>
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="text-[10px] font-bold text-trad-500 uppercase tracking-widest">Tradicional</h4>
+                                <div id="box_trad" class="status-badge">...</div>
+                            </div>
+                            <div class="flex flex-wrap items-baseline gap-1.5 mt-1">
+                                <div class="text-3xl font-bold text-trad-700 tracking-tight" id="val_quota_trad">0 €</div>
+                                <span class="text-xs text-slate-400 font-medium">/mes</span>
+                                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wide self-center">(Solo Hipoteca)</span>
+                            </div>
+                        </div>
+                        
+                        <div id="error_trad" class="hidden mt-2 bg-red-50 border border-red-100 rounded-lg p-2.5 flex gap-2 items-start">
+                            <i data-lucide="x-circle" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i>
+                            <div class="text-[10px] leading-tight text-red-800 font-medium">
+                                <span class="font-bold block">INVIABLE:</span> No tienes ahorros suficientes para pagar la reforma al contado.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BOX BEDU -->
+                    <div class="card border-l-4 border-l-bedu-500 flex flex-col justify-between gap-3 relative group ring-1 ring-bedu-500/10" style="background-color: #FFF8E6 !important;">
+                        <div>
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h4 class="text-[10px] font-bold text-bedu-700 uppercase tracking-widest mb-0.5">Opción Bedu</h4>
+                                    <div class="h-0.5 w-8 bg-bedu-300 rounded-full"></div>
+                                </div>
+                                <div id="box_bedu" class="status-badge">...</div>
+                            </div>
+                            <div class="flex flex-wrap items-baseline gap-1.5 mt-2">
+                                <div class="text-4xl font-black text-bedu-600 tracking-tight" id="val_quota_bedu">0 €</div>
+                                <span class="text-[10px] text-bedu-600/80 font-bold uppercase tracking-wide self-center">/mes (Todo Incluido)</span>
+                            </div>
+                        </div>
+                        
+                        <div id="error_bedu" class="hidden mt-2 bg-red-50 border border-red-100 rounded-lg p-2.5 flex gap-2 items-start">
+                            <i data-lucide="x-circle" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i>
+                            <div class="text-[10px] leading-tight text-red-800 font-medium">
+                                <span class="font-bold block">INVIABLE:</span> Faltan ahorros para la entrada mínima.
+                            </div>
+                        </div>
+
+                        <div id="bedu_success" class="hidden bg-white border border-bedu-100 rounded-lg p-2 flex gap-2 items-center justify-center shadow-sm">
+                             <i data-lucide="check-circle-2" class="w-4 h-4 text-bedu-500 shrink-0"></i>
+                            <span class="text-[10px] font-black text-bedu-800 uppercase tracking-wide">Somos tu mejor opción</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLA DETALLES -->
+                <div class="card shadow-sm overflow-hidden p-0">
+                    <button class="w-full bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center hover:bg-slate-100 transition-colors group" onclick="document.getElementById('details-table').classList.toggle('hidden'); document.getElementById('chev-table').classList.toggle('rotate-180')">
+                        <span class="font-bold text-slate-500 text-xs uppercase tracking-widest flex items-center gap-2 group-hover:text-bedu-600 transition-colors">
+                            <i data-lucide="table-2" class="w-4 h-4"></i> Ver Números al Detalle
+                        </span>
+                        <i data-lucide="chevron-down" id="chev-table" class="w-4 h-4 text-slate-400 transition-transform duration-300"></i>
+                    </button>
+                    
+                    <div id="details-table" class="hidden transition-all bg-white">
+                        <table class="w-full text-xs text-left text-slate-600">
+                            <thead class="text-[10px] text-slate-400 uppercase bg-slate-50/50">
+                                <tr>
+                                    <th class="px-4 py-3 font-bold">Concepto</th>
+                                    <th class="px-4 py-3 font-bold text-right">Trad.</th>
+                                    <th class="px-4 py-3 font-bold text-right text-bedu-700">Bedu</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr>
+                                    <td class="px-4 py-3">Precio Compra</td>
+                                    <td class="px-4 py-3 text-right tabular-nums" id="val_price_trad">0 €</td>
+                                    <td class="px-4 py-3 text-right tabular-nums font-bold" id="val_price_bedu">0 €</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3">Reforma</td>
+                                    <td class="px-4 py-3 text-right tabular-nums text-red-500 font-medium" id="val_reform_trad">0 €</td>
+                                    <td class="px-4 py-3 text-right text-slate-400 italic" id="val_reform_bedu">Incluida</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3">Gastos (ITP)</td>
+                                    <td class="px-4 py-3 text-right tabular-nums" id="val_exp_trad">0 €</td>
+                                    <td class="px-4 py-3 text-right tabular-nums" id="val_exp_bedu">0 €</td>
+                                </tr>
+                                <tr class="bg-slate-50 font-bold text-slate-800">
+                                    <td class="px-4 py-3">TOTAL OPERACIÓN</td>
+                                    <td class="px-4 py-3 text-right tabular-nums" id="val_total_trad">0 €</td>
+                                    <td class="px-4 py-3 text-right tabular-nums text-bedu-700" id="val_total_bedu">0 €</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 text-[10px] text-slate-400 uppercase tracking-wider">Hipoteca</td>
+                                    <td class="px-4 py-3 text-right tabular-nums text-slate-500" id="val_mortgage_trad">0 €</td>
+                                    <td class="px-4 py-3 text-right tabular-nums text-slate-500" id="val_mortgage_bedu">0 €</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCION CARRUSEL FULL WIDTH -->
+        <section class="mt-8 lg:mt-10">
+            <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 px-1">
+                <i data-lucide="home" class="text-bedu-500 w-5 h-5"></i> 
+                <span>Casas Bedu: El resultado final</span>
+            </h2>
+            <div class="carousel-container">
+                <div class="carousel-item shadow-sm group"><img src="casa1.jpg" onerror="this.src='https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'" alt="Bedu 1"></div>
+                <div class="carousel-item shadow-sm group"><img src="casa2.jpg" onerror="this.src='https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'" alt="Bedu 2"></div>
+                <div class="carousel-item shadow-sm group"><img src="casa3.jpg" onerror="this.src='https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'" alt="Bedu 3"></div>
+                <div class="carousel-item shadow-sm group"><img src="casa4.jpg" onerror="this.src='https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'" alt="Bedu 4"></div>
+                <div class="carousel-item shadow-sm group"><img src="casa5.jpg" onerror="this.src='https://images.unsplash.com/photo-1556911220-e15b29be8c8f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'" alt="Bedu 5"></div>
+                <div class="carousel-item shadow-sm group"><img src="casa6.jpg" onerror="this.src='https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'" alt="Bedu 6"></div>
+                <div class="carousel-item shadow-sm group"><img src="casa7.jpg" onerror="this.src='https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'" alt="Bedu 7"></div>
+                <div class="carousel-item shadow-sm group"><img src="casa8.jpg" onerror="this.src='https://images.unsplash.com/photo-1600607686527-6fb886090705?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'" alt="Bedu 8"></div>
+                <div class="carousel-item shadow-sm group"><img src="casa9.jpg" onerror="this.src='https://images.unsplash.com/photo-1560185007-cde436f6a4d0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'" alt="Bedu 9"></div>
+                <div class="carousel-item shadow-sm group"><img src="casa10.jpg" onerror="this.src='https://images.unsplash.com/photo-1598228723793-52759bba239c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'" alt="Bedu 10"></div>
+            </div>
+        </section>
+
+        <!-- CTA FINAL -->
+        <div class="mt-10 bg-slate-900 rounded-2xl p-8 text-center relative overflow-hidden group cursor-pointer shadow-xl">
+            <div class="absolute inset-0 bg-gradient-to-r from-bedu-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <h3 class="text-white text-xl md:text-2xl font-bold mb-3 relative z-10">¿Te encajan los números?</h3>
+            <p class="text-slate-400 text-sm mb-6 relative z-10 max-w-lg mx-auto">Nuestros expertos analizan la viabilidad de este inmueble contigo. Sin compromiso.</p>
+            <button class="bg-bedu-500 text-white font-bold py-4 px-8 rounded-xl w-full md:w-auto shadow-lg shadow-bedu-500/20 hover:bg-bedu-400 hover:scale-105 transition-all relative z-10 uppercase text-xs tracking-[0.15em]">
+                Validar con un Experto
+            </button>
+        </div>
+
+        <footer class="mt-12 text-center text-slate-400 text-[10px] pb-24 lg:pb-8 border-t border-slate-200 pt-8">
+            <p class="font-bold text-slate-300 uppercase tracking-widest mb-2">Aviso Legal</p>
+            <p class="mb-1">Simulación orientativa. No constituye oferta ni asesoramiento financiero.</p>
+            <p>© 2025 Bedu Homes.</p>
+        </footer>
+
+    </div>
+
+    <!-- STICKY BOTTOM BAR MEJORADO -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-5 py-4 shadow-[0_-5px_20px_rgba(0,0,0,0.15)] z-50 lg:hidden flex justify-between items-center safe-area-bottom pb-[env(safe-area-inset-bottom)]">
+        <div class="flex flex-col">
+            <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Cuota Bedu est.</span>
+            <span class="text-2xl font-black text-bedu-500 leading-none tracking-tight" id="val_quota_bedu_sticky">0 €</span>
+        </div>
+        <button onclick="document.getElementById('results_panel').scrollIntoView({behavior: 'smooth'})" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-slate-800/20 active:scale-95 transition-all flex items-center gap-2">
+            Ver Detalle <i data-lucide="arrow-down" class="w-3 h-3"></i>
+        </button>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        function updateToggleUI() {
+            // Checkbox nativo maneja estado, esto solo añade efectos visuales extra si se requiere
+        }
+
+        function formatInput(input) {
+            let value = input.value.replace(/\D/g, '');
+            value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            input.value = value;
+        }
+
+        function parseVal(id) {
+            const raw = document.getElementById(id).value;
+            return parseFloat(raw.replace(/\./g, '')) || 0;
+        }
+
+        const districtData = {
+            "Arganzuela": { neighborhoods: ["Acacias", "Chopera", "Delicias", "Imperial", "Legazpi", "Palos de Moguer"], priceM2: 20.5 },
+            "Barajas": { neighborhoods: ["Alameda de Osuna", "Aeropuerto", "Casco Histórico", "Timón", "Corralejos"], priceM2: 15.8 },
+            "Carabanchel": { neighborhoods: ["Abrantes", "Buena Vista", "Comillas", "Opañel", "Pau", "Puerta Bonita", "San Isidro", "Vista Alegre"], priceM2: 17.2 },
+            "Centro": { neighborhoods: ["Cortes", "Embajadores", "Justicia", "Palacio", "Sol", "Universidad"], priceM2: 26.5 },
+            "Chamartín": { neighborhoods: ["Bernabéu", "Castilla", "Ciudad Jardín", "El Viso", "Nueva España", "Prosperidad"], priceM2: 22.0 },
+            "Chamberí": { neighborhoods: ["Almagro", "Arapiles", "Gaztambide", "Ríos Rosas", "Trafalgar", "Vallehermoso"], priceM2: 25.0 },
+            "Ciudad Lineal": { neighborhoods: ["Atalaya", "Colina", "Concepción", "Costillares", "Pueblo Nuevo", "Quintana", "San Pascual", "Ventas"], priceM2: 18.5 },
+            "Fuencarral": { neighborhoods: ["Arroyo del Fresno", "Las Tablas", "Mirasierra", "Montecarmelo", "Peñagrande", "Pilar", "Tres Olivos", "El Pardo"], priceM2: 17.0 },
+            "Hortaleza": { neighborhoods: ["Apóstol Santiago", "Canillas", "Palomas", "Pinar del Rey", "Piovera", "Valdebebas"], priceM2: 17.5 },
+            "Latina": { neighborhoods: ["Aluche", "Campamento", "Cuatro Vientos", "Las Águilas", "Lucero", "Puerta del Ángel"], priceM2: 17.0 },
+            "Moncloa": { neighborhoods: ["Aravaca", "Argüelles", "Casa de Campo", "Ciudad Universitaria", "El Plantío", "Valdemarín"], priceM2: 21.0 },
+            "Moratalaz": { neighborhoods: ["Fontarrón", "Horcajo", "Marroquina", "Media Legua", "Pavones", "Vinateros"], priceM2: 15.5 },
+            "Puente de Vallecas": { neighborhoods: ["Entrevías", "Numancia", "Palomeras Bajas", "Palomeras Sureste", "Portazgo", "San Diego"], priceM2: 18.0 },
+            "Retiro": { neighborhoods: ["Adelfas", "Estrella", "Ibiza", "Jerónimos", "Niño Jesús", "Pacífico"], priceM2: 22.5 },
+            "Salamanca": { neighborhoods: ["Castellana", "Fuente del Berro", "Goya", "Guindalera", "Lista", "Recoletos"], priceM2: 28.0 },
+            "San Blas": { neighborhoods: ["Amposta", "Arcos", "Canillejas", "Hellín", "Rejas", "Rosas", "Salvador", "Simancas"], priceM2: 15.0 },
+            "Tetuán": { neighborhoods: ["Almenara", "Bellas Vistas", "Berruguete", "Castillejos", "Cuatro Caminos", "Valdeacederas"], priceM2: 19.5 },
+            "Usera": { neighborhoods: ["Almendrales", "Moscardó", "Orcasitas", "Orcasur", "Pradolongo", "San Fermín", "Zofío"], priceM2: 14.8 },
+            "Vicálvaro": { neighborhoods: ["Ambroz", "Casco Histórico", "El Cañaveral", "Valdebernardo"], priceM2: 13.5 },
+            "Villa de Vallecas": { neighborhoods: ["Casco Histórico", "Santa Eugenia", "Ensanche de Vallecas"], priceM2: 14.5 },
+            "Villaverde": { neighborhoods: ["Butarque", "Los Ángeles", "Los Rosales", "San Andrés", "San Cristóbal"], priceM2: 13.8 }
+        };
+
+        const CONFIG = {
+            ITP: 0.06,
+            NOTARY: 0, 
+            BEDU_REFORM_M2: 1100,
+            BEDU_DECO: 10000,
+            BEDU_OTHER: 6000,
+            TRAD_MARKUP: 1.15,
+            DISCOUNT_TRAD: 0.03,
+            DISCOUNT_BEDU: 0.06,
+            MARGIN_BEDU: 1.15, 
+            INTEREST_RATE: 0.03,
+            YEARS: 30,
+            ITP_BEDU_ACQ: 0.03 
+        };
+
+        const distSelect = document.getElementById('district');
+        const neighSelect = document.getElementById('neighborhood');
+
+        Object.keys(districtData).sort().forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d;
+            opt.textContent = d;
+            distSelect.appendChild(opt);
+        });
+        distSelect.value = "Tetuán"; // Default actualizado
+
+        function updateNeighborhoods() {
+            const d = distSelect.value;
+            neighSelect.innerHTML = '';
+            if (districtData[d]) {
+                districtData[d].neighborhoods.sort().forEach(n => {
+                    const opt = document.createElement('option');
+                    opt.value = n;
+                    opt.textContent = n;
+                    neighSelect.appendChild(opt);
+                });
+                // Default actualizado
+                if (d === "Tetuán") {
+                    neighSelect.value = "Valdeacederas";
+                } else {
+                    neighSelect.value = districtData[d].neighborhoods[0];
+                }
+            }
+            calcular(); 
+        }
+
+        function toggleAssumptions() {
+            document.getElementById('assumptions-panel').classList.toggle('show');
+        }
+
+        const eur = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0, useGrouping: true });
+        function formatCurrency(val) { return eur.format(val); }
+
+        function calcular() {
+            try {
+                const income1 = parseVal('income1');
+                const income2 = parseVal('income2');
+                const savings = parseVal('savings');
+                const advertisedPrice = parseVal('price');
+                const m2 = parseFloat(document.getElementById('m2').value) || 0;
+                const isYoung = document.getElementById('ageUnder35').checked;
+                const district = document.getElementById('district').value;
+
+                // --- 1. RENTABILIDAD ---
+                const priceM2 = districtData[district] ? districtData[district].priceM2 : 15;
+                const estimatedRent = m2 * priceM2;
+                document.getElementById('lbl_rental_price').innerText = formatCurrency(estimatedRent);
+
+                // --- 2. SOLVENCIA ---
+                const totalIncome = income1 + income2;
+                const maxQuota = totalIncome * 0.40;
+                const monthlyRate = CONFIG.INTEREST_RATE / 12;
+                const months = CONFIG.YEARS * 12;
+                const factor = Math.pow(1 + monthlyRate, months);
+                
+                document.getElementById('lbl_max_quota').innerText = formatCurrency(maxQuota);
+
+                const maxMortgage = maxQuota * (factor - 1) / (monthlyRate * factor);
+                document.getElementById('lbl_max_mortgage').innerText = formatCurrency(maxMortgage); 
+
+                // --- 3. COSTES ---
+                const priceTrad = advertisedPrice * (1 - CONFIG.DISCOUNT_TRAD);
+                const reformCostBase = (m2 * CONFIG.BEDU_REFORM_M2) + CONFIG.BEDU_DECO + CONFIG.BEDU_OTHER;
+                const reformTrad = reformCostBase * CONFIG.TRAD_MARKUP; 
+                const expensesTrad = (priceTrad * CONFIG.ITP) + CONFIG.NOTARY;
+                const totalTrad = priceTrad + reformTrad + expensesTrad;
+
+                const priceBeduBuy = advertisedPrice * (1 - CONFIG.DISCOUNT_BEDU);
+                const costInternalBedu = (priceBeduBuy * (1 + CONFIG.ITP_BEDU_ACQ)) + reformCostBase; 
+                const salePriceBedu = costInternalBedu * CONFIG.MARGIN_BEDU;
+                const expensesBedu = (salePriceBedu * CONFIG.ITP) + CONFIG.NOTARY;
+                const totalClientBedu = salePriceBedu + expensesBedu;
+
+                // --- 4. FINANCIACIÓN ---
+                const ltv = isYoung ? 0.95 : 0.80;
+
+                const mortgageTrad = priceTrad * ltv;
+                const capitalTrad = (priceTrad - mortgageTrad) + expensesTrad + reformTrad;
+
+                const mortgageBedu = salePriceBedu * ltv;
+                const capitalBedu = (salePriceBedu - mortgageBedu) + expensesBedu;
+
+                // --- 5. CUOTAS ---
+                const quotaTrad = (mortgageTrad * monthlyRate * factor) / (factor - 1);
+                const quotaBedu = (mortgageBedu * monthlyRate * factor) / (factor - 1);
+
+                // --- RENDERIZADO ---
+                document.getElementById('val_capital_trad').innerText = formatCurrency(capitalTrad);
+                document.getElementById('val_capital_bedu').innerText = formatCurrency(capitalBedu);
+                
+                let percent = (capitalBedu / capitalTrad) * 100;
+                if(percent > 100) percent = 100; if(percent < 5) percent = 5;
+                document.getElementById('bar_bedu').style.width = percent + "%";
+
+                const saved = capitalTrad - capitalBedu;
+                document.getElementById('saved_money').innerText = formatCurrency(saved);
+
+                const statusMsg = document.getElementById('status_msg');
+                if (savings >= capitalBedu) {
+                    if (savings >= capitalTrad) {
+                        statusMsg.innerText = "¡TIENES LIQUIDEZ PARA AMBOS!";
+                        statusMsg.className = "w-full md:w-auto text-center py-2 px-4 rounded-xl font-bold text-[10px] uppercase tracking-wider z-10 transition-all bg-blue-100 text-blue-900 border border-blue-200";
+                    } else {
+                        statusMsg.innerText = "¡SOLO ES POSIBLE CON BEDU!";
+                        statusMsg.className = "w-full md:w-auto text-center py-2 px-4 rounded-xl font-bold text-[10px] uppercase tracking-wider z-10 transition-all bg-bedu-500 text-white animate-pulse border border-bedu-600 shadow-md";
+                    }
+                } else {
+                    statusMsg.innerText = "NECESITAS MÁS AHORRO INICIAL";
+                    statusMsg.className = "w-full md:w-auto text-center py-2 px-4 rounded-xl font-bold text-[10px] uppercase tracking-wider z-10 transition-all bg-red-100 text-red-900 border border-red-200";
+                }
+
+                document.getElementById('val_quota_trad').innerText = formatCurrency(quotaTrad);
+                document.getElementById('val_quota_bedu').innerText = formatCurrency(quotaBedu);
+                document.getElementById('val_quota_bedu_sticky').innerText = formatCurrency(quotaBedu);
+
+                // --- VIABILIDAD ---
+                const updateViabilityBox = (quota, capitalNeeded, boxId, errorId, isBedu) => {
+                    const box = document.getElementById(boxId);
+                    const errorDiv = document.getElementById(errorId);
+                    const successDiv = document.getElementById('bedu_success');
+                    
+                    // Reset
+                    errorDiv.classList.add('hidden');
+                    if(isBedu) successDiv.classList.add('hidden');
+
+                    if (savings < capitalNeeded) {
+                        box.innerText = "INVIABLE";
+                        box.className = "status-badge status-error";
+                        errorDiv.classList.remove('hidden'); 
+                        return;
+                    }
+
+                    if (quota <= maxQuota) {
+                        box.innerText = "VIABLE";
+                        box.className = "status-badge status-success";
+                        if(isBedu) successDiv.classList.remove('hidden');
+                    } else {
+                        box.innerText = "RIESGO ALTO";
+                        box.className = "status-badge status-warn";
+                    }
+                };
+
+                updateViabilityBox(quotaTrad, capitalTrad, 'box_trad', 'error_trad', false);
+                updateViabilityBox(quotaBedu, capitalBedu, 'box_bedu', 'error_bedu', true);
+
+                // Tabla final
+                document.getElementById('val_price_trad').innerText = formatCurrency(priceTrad);
+                document.getElementById('val_price_bedu').innerText = formatCurrency(salePriceBedu);
+                document.getElementById('val_reform_trad').innerText = formatCurrency(reformTrad);
+                document.getElementById('val_exp_trad').innerText = formatCurrency(expensesTrad);
+                document.getElementById('val_exp_bedu').innerText = formatCurrency(expensesBedu);
+                document.getElementById('val_total_trad').innerText = formatCurrency(totalTrad);
+                document.getElementById('val_total_bedu').innerText = formatCurrency(totalClientBedu);
+                document.getElementById('val_mortgage_trad').innerText = formatCurrency(mortgageTrad);
+                document.getElementById('val_mortgage_bedu').innerText = formatCurrency(mortgageBedu);
+
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        updateNeighborhoods();
+    </script>
+</body>
+</html>
